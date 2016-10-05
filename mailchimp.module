@@ -192,8 +192,8 @@ function mailchimp_mailchimp_api_key() {
  * @see mailchimp_account_select_form().
  */
 function mailchimp_mailchimp_api_key_alter(&$api_key, $context) {
-  if (isset($_POST['mc_aid'])) {
-    $api_key = mailchimp_get_api_key_for_account($_POST['mc_aid']);
+  if (isset($_REQUEST['mc_aid'])) {
+    $api_key = mailchimp_get_api_key_for_account($_REQUEST['mc_aid']);
   }
 }
 
@@ -274,21 +274,9 @@ function mailchimp_get_api_key_for_account($account_id) {
  */
 function mailchimp_account_select_form($form, &$form_state) {
   $form = array();
-  $account = mailchimp_api_account();
-  $form['heading'] = array(
-    '#markup' => '<h2>' . $account->account_name . '</h2>',
-  );
   $accounts = mailchimp_api_accounts();
   if (count($accounts) > 1) {
-    $options = array();
-    foreach ($accounts as $account_id => $account) {
-      $options[$account_id] = $account->account_name;
-    }
-    $form['mc_aid'] = array(
-      '#type' => 'select',
-      '#options' => $options,
-      '#default_value' => (isset($_REQUEST['mc_aid'])) ? $_REQUEST['mc_aid'] : 'default',
-    );
+    $form['mc_aid'] = mailchimp_account_select_list($accounts);
     $form['#action'] = $_SERVER['REQUEST_URI'];
     $form['#method'] = 'post';
     $form['submit'] = array(
@@ -299,6 +287,30 @@ function mailchimp_account_select_form($form, &$form_state) {
   return $form;
 }
 
+/**
+ * Creates a list of registered accounts as select options.
+ *
+ * @param Object $accounts
+ *   MailChimp accounts for which keys have been registered.
+ *
+ * @return array
+ *   The Form API formatted select element
+ */
+function mailchimp_account_select_list($accounts) {
+  $options = array();
+  foreach ($accounts as $account_id => $account) {
+    $options[$account_id] = $account->account_name;
+  }
+  return array(
+    '#type' => 'select',
+    '#options' => $options,
+    '#default_value' => (isset($_REQUEST['mc_aid'])) ? $_REQUEST['mc_aid'] : 'default',
+  );
+}
+
+/**
+ * Form submit handler to enable the POST request processing.
+ */
 function mailchimp_account_select_form_submit($form, &$form_state) {
   $form_state['rebuild'] = TRUE;
 }
